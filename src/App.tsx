@@ -26,12 +26,7 @@ import {
   X,
   Wand2,
   Brain,
-  Shield,
-  Mail,
-  Download,
-  Globe,
-  Smartphone,
-  Monitor
+  Mail
 } from 'lucide-react';
 
 // Import components
@@ -74,7 +69,6 @@ interface PricingTier {
   name: string;
   price: string;
   period: string;
-  description: string;
   features: string[];
   popular?: boolean;
 }
@@ -161,7 +155,7 @@ function App() {
       gradient: "from-orange-500 to-red-500"
     },
     {
-      icon: <Shield className="w-6 h-6 text-white" />,
+      icon: <DollarSign className="w-6 h-6 text-white" />,
       title: "Budget Protection",
       description: "Smart budget management prevents overspending while maximizing your advertising impact.",
       gradient: "from-indigo-500 to-purple-500"
@@ -203,7 +197,6 @@ function App() {
       name: "Starter",
       price: "$29",
       period: "month",
-      description: "Perfect for small businesses getting started",
       features: [
         "Up to 3 ad campaigns",
         "Basic analytics dashboard",
@@ -216,7 +209,6 @@ function App() {
       name: "Professional",
       price: "$79",
       period: "month",
-      description: "Ideal for growing businesses",
       features: [
         "Unlimited ad campaigns",
         "Advanced analytics & insights",
@@ -232,7 +224,6 @@ function App() {
       name: "Enterprise",
       price: "$199",
       period: "month",
-      description: "For large businesses and agencies",
       features: [
         "Everything in Professional",
         "Dedicated account manager",
@@ -245,6 +236,175 @@ function App() {
     }
   ];
 
+  const Navigation = () => (
+    <nav className="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-md border-b border-gray-800">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          <div className="flex items-center">
+            <div className="flex-shrink-0 flex items-center">
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <Rocket className="w-5 h-5 text-white" />
+              </div>
+              <span className="ml-2 text-xl font-bold text-white">AdStronaut</span>
+            </div>
+          </div>
+          
+          {currentView !== 'landing' && (
+            <>
+              <div className="hidden md:block">
+                <div className="ml-10 flex items-baseline space-x-4">
+                  <button
+                    onClick={() => setCurrentView('dashboard')}
+                    className={`px-3 py-2 rounded-md text-sm font-medium ${
+                      currentView === 'dashboard' 
+                        ? 'bg-blue-900 text-blue-200' 
+                        : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                    }`}
+                  >
+                    Dashboard
+                  </button>
+                  <button
+                    onClick={() => setCurrentView('campaigns')}
+                    className={`px-3 py-2 rounded-md text-sm font-medium ${
+                      currentView === 'campaigns' 
+                        ? 'bg-blue-900 text-blue-200' 
+                        : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                    }`}
+                  >
+                    Campaigns
+                  </button>
+                  <button
+                    onClick={() => setCurrentView('ai-tools')}
+                    className={`px-3 py-2 rounded-md text-sm font-medium ${
+                      currentView === 'ai-tools' 
+                        ? 'bg-blue-900 text-blue-200' 
+                        : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                    }`}
+                  >
+                    AI Tools
+                  </button>
+                  <button
+                    onClick={() => setCurrentView('analytics')}
+                    className={`px-3 py-2 rounded-md text-sm font-medium ${
+                      currentView === 'analytics' 
+                        ? 'bg-blue-900 text-blue-200' 
+                        : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                    }`}
+                  >
+                    Analytics
+                  </button>
+                </div>
+              </div>
+              
+              <div className="hidden md:flex items-center space-x-4">
+                <button className="p-2 text-gray-400 hover:text-gray-200">
+                  <Bell className="w-5 h-5" />
+                </button>
+                <button className="p-2 text-gray-400 hover:text-gray-200">
+                  <Settings className="w-5 h-5" />
+                </button>
+                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                  <span className="text-white text-sm font-medium">JD</span>
+                </div>
+              </div>
+              
+              <div className="md:hidden">
+                <button
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-200 hover:bg-gray-800"
+                >
+                  {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                </button>
+              </div>
+            </>
+          )}
+          
+          {currentView === 'landing' && (
+            <div className="hidden md:flex items-center space-x-8">
+              <a href="#features" className="text-gray-300 hover:text-white transition-colors">Features</a>
+              <a href="#pricing" className="text-gray-300 hover:text-white transition-colors">Pricing</a>
+              <a href="#about" className="text-gray-300 hover:text-white transition-colors">About</a>
+              <a href="#contact" className="text-gray-300 hover:text-white transition-colors">Contact</a>
+              <Button variant="outline" size="sm">
+                Sign In
+              </Button>
+              <Button 
+                size="sm"
+                onClick={() => setCurrentView('dashboard')}
+              >
+                Get Started
+              </Button>
+            </div>
+          )}
+
+          {currentView === 'landing' && (
+            <div className="md:hidden">
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-200"
+              >
+                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
+            </div>
+          )}
+        </div>
+        
+        {mobileMenuOpen && currentView !== 'landing' && (
+          <div className="md:hidden">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t border-gray-800">
+              <button
+                onClick={() => {setCurrentView('dashboard'); setMobileMenuOpen(false);}}
+                className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-800 w-full text-left"
+              >
+                Dashboard
+              </button>
+              <button
+                onClick={() => {setCurrentView('campaigns'); setMobileMenuOpen(false);}}
+                className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-800 w-full text-left"
+              >
+                Campaigns
+              </button>
+              <button
+                onClick={() => {setCurrentView('ai-tools'); setMobileMenuOpen(false);}}
+                className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-800 w-full text-left"
+              >
+                AI Tools
+              </button>
+              <button
+                onClick={() => {setCurrentView('analytics'); setMobileMenuOpen(false);}}
+                className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-800 w-full text-left"
+              >
+                Analytics
+              </button>
+            </div>
+          </div>
+        )}
+
+        {mobileMenuOpen && currentView === 'landing' && (
+          <div className="md:hidden bg-black/95 backdrop-blur-md border-t border-gray-800">
+            <div className="px-4 py-4 space-y-4">
+              <a href="#features" className="block text-gray-300 hover:text-white transition-colors">Features</a>
+              <a href="#pricing" className="block text-gray-300 hover:text-white transition-colors">Pricing</a>
+              <a href="#about" className="block text-gray-300 hover:text-white transition-colors">About</a>
+              <a href="#contact" className="block text-gray-300 hover:text-white transition-colors">Contact</a>
+              <div className="flex flex-col space-y-2 pt-4">
+                <Button variant="outline" size="sm">
+                  Sign In
+                </Button>
+                <Button 
+                  size="sm"
+                  onClick={() => setCurrentView('dashboard')}
+                >
+                  Get Started
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </nav>
+  );
+
   const FeatureCard: React.FC<Feature> = ({ icon, title, description, gradient = "from-blue-500 to-purple-600" }) => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -254,7 +414,7 @@ function App() {
       className="relative group"
     >
       <div className={`absolute -inset-0.5 rounded-xl blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 bg-gradient-to-r ${gradient}`}></div>
-      <Card className="relative overflow-hidden border-gray-800 bg-gray-900/50 backdrop-blur-sm hover:bg-gray-900/80 transition-all duration-300 h-full">
+      <Card className="relative overflow-hidden border-gray-700 bg-gray-800/50 backdrop-blur-sm hover:bg-gray-800/80 transition-all duration-300 h-full">
         <CardContent className="p-6 flex flex-col items-start">
           <div className={`inline-flex items-center justify-center w-12 h-12 rounded-lg bg-gradient-to-r ${gradient} mb-4`}>
             {icon}
@@ -267,7 +427,7 @@ function App() {
   );
 
   const TestimonialCard: React.FC<TestimonialProps> = ({ name, role, company, content, rating }) => (
-    <Card className="bg-gray-900/50 backdrop-blur-sm border-gray-800">
+    <Card className="bg-gray-800/50 backdrop-blur-sm border-gray-700">
       <CardContent className="p-6">
         <div className="flex items-center mb-4">
           {[...Array(5)].map((_, i) => (
@@ -286,8 +446,8 @@ function App() {
     </Card>
   );
 
-  const PricingCard: React.FC<PricingTier> = ({ name, price, period, description, features, popular = false }) => (
-    <Card className={`relative ${popular ? 'border-blue-500 shadow-lg scale-105' : 'border-gray-800'} bg-gray-900/50 backdrop-blur-sm`}>
+  const PricingCard: React.FC<PricingTier> = ({ name, price, period, features, popular = false }) => (
+    <Card className={`relative ${popular ? 'border-blue-500 shadow-lg scale-105' : 'border-gray-700'} bg-gray-800/50 backdrop-blur-sm`}>
       {popular && (
         <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white">
           Most Popular
@@ -295,7 +455,6 @@ function App() {
       )}
       <CardContent className="p-6">
         <h3 className="text-2xl font-bold text-white mb-2">{name}</h3>
-        <p className="text-gray-400 mb-4">{description}</p>
         <div className="mb-6">
           <span className="text-4xl font-bold text-white">{price}</span>
           <span className="text-gray-400">/{period}</span>
@@ -303,154 +462,19 @@ function App() {
         <ul className="space-y-3 mb-6">
           {features.map((feature, index) => (
             <li key={index} className="flex items-center">
-              <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+              <CheckCircle className="w-5 h-5 text-green-400 mr-3" />
               <span className="text-gray-300">{feature}</span>
             </li>
           ))}
         </ul>
-        <Button className={`w-full ${popular ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'} text-white`}>
+        <Button 
+          className={`w-full ${popular ? 'bg-blue-500 hover:bg-blue-600' : ''}`}
+          onClick={() => setCurrentView('dashboard')}
+        >
           Get Started
         </Button>
       </CardContent>
     </Card>
-  );
-
-  const Navigation = () => (
-    <nav className="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-md border-b border-gray-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <Rocket className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-white">AdStronaut</span>
-          </div>
-
-          {currentView !== 'landing' && (
-            <>
-              <div className="hidden md:flex items-center space-x-8">
-                <button
-                  onClick={() => setCurrentView('dashboard')}
-                  className={`text-gray-300 hover:text-white transition-colors ${
-                    currentView === 'dashboard' ? 'text-blue-400' : ''
-                  }`}
-                >
-                  Dashboard
-                </button>
-                <button
-                  onClick={() => setCurrentView('campaigns')}
-                  className={`text-gray-300 hover:text-white transition-colors ${
-                    currentView === 'campaigns' ? 'text-blue-400' : ''
-                  }`}
-                >
-                  Campaigns
-                </button>
-                <button
-                  onClick={() => setCurrentView('ai-tools')}
-                  className={`text-gray-300 hover:text-white transition-colors ${
-                    currentView === 'ai-tools' ? 'text-blue-400' : ''
-                  }`}
-                >
-                  AI Tools
-                </button>
-                <button
-                  onClick={() => setCurrentView('analytics')}
-                  className={`text-gray-300 hover:text-white transition-colors ${
-                    currentView === 'analytics' ? 'text-blue-400' : ''
-                  }`}
-                >
-                  Analytics
-                </button>
-              </div>
-              
-              <div className="hidden md:flex items-center space-x-4">
-                <button className="p-2 text-gray-400 hover:text-gray-300">
-                  <Bell className="w-5 h-5" />
-                </button>
-                <button className="p-2 text-gray-400 hover:text-gray-300">
-                  <Settings className="w-5 h-5" />
-                </button>
-                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-medium">JD</span>
-                </div>
-              </div>
-            </>
-          )}
-          
-          {currentView === 'landing' && (
-            <div className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-gray-300 hover:text-white transition-colors">Features</a>
-              <a href="#pricing" className="text-gray-300 hover:text-white transition-colors">Pricing</a>
-              <a href="#about" className="text-gray-300 hover:text-white transition-colors">About</a>
-              <a href="#contact" className="text-gray-300 hover:text-white transition-colors">Contact</a>
-              <Button variant="outline" size="sm" className="border-gray-600 text-gray-300 hover:bg-gray-800">
-                Sign In
-              </Button>
-              <Button size="sm" className="bg-blue-500 hover:bg-blue-600">
-                Get Started
-              </Button>
-            </div>
-          )}
-
-          <button
-            className="md:hidden text-gray-300"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-        </div>
-        
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-black/95 backdrop-blur-md border-t border-gray-800">
-            <div className="px-4 py-4 space-y-4">
-              {currentView === 'landing' ? (
-                <>
-                  <a href="#features" className="block text-gray-300 hover:text-white transition-colors">Features</a>
-                  <a href="#pricing" className="block text-gray-300 hover:text-white transition-colors">Pricing</a>
-                  <a href="#about" className="block text-gray-300 hover:text-white transition-colors">About</a>
-                  <a href="#contact" className="block text-gray-300 hover:text-white transition-colors">Contact</a>
-                  <div className="flex flex-col space-y-2 pt-4">
-                    <Button variant="outline" size="sm" className="border-gray-600 text-gray-300 hover:bg-gray-800">
-                      Sign In
-                    </Button>
-                    <Button size="sm" className="bg-blue-500 hover:bg-blue-600">
-                      Get Started
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => {setCurrentView('dashboard'); setMobileMenuOpen(false);}}
-                    className="block text-gray-300 hover:text-white transition-colors w-full text-left"
-                  >
-                    Dashboard
-                  </button>
-                  <button
-                    onClick={() => {setCurrentView('campaigns'); setMobileMenuOpen(false);}}
-                    className="block text-gray-300 hover:text-white transition-colors w-full text-left"
-                  >
-                    Campaigns
-                  </button>
-                  <button
-                    onClick={() => {setCurrentView('ai-tools'); setMobileMenuOpen(false);}}
-                    className="block text-gray-300 hover:text-white transition-colors w-full text-left"
-                  >
-                    AI Tools
-                  </button>
-                  <button
-                    onClick={() => {setCurrentView('analytics'); setMobileMenuOpen(false);}}
-                    className="block text-gray-300 hover:text-white transition-colors w-full text-left"
-                  >
-                    Analytics
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    </nav>
   );
 
   const LandingPage = () => (
@@ -485,30 +509,30 @@ function App() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-              <div className="flex items-center gap-3 bg-gray-900/20 backdrop-blur-sm border border-gray-700 rounded-full px-6 py-3">
-                <Mail className="w-5 h-5 text-gray-400" />
+              <div className="flex items-center gap-3 bg-gray-800/20 backdrop-blur-sm border border-gray-700 rounded-full px-6 py-3 w-full max-w-md">
+                <Mail className="w-5 h-5 text-gray-400 flex-shrink-0" />
                 <Input
                   placeholder="Enter your email"
-                  className="border-0 bg-transparent focus:ring-0 text-white placeholder:text-gray-400"
+                  className="border-0 bg-transparent focus:ring-0 text-white placeholder:text-gray-400 flex-1"
                 />
-                <Button size="sm" className="bg-blue-500 hover:bg-blue-600">
+                <Button size="sm" className="bg-blue-500 hover:bg-blue-600 flex-shrink-0">
                   Start Free Trial
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
             </div>
 
-            <div className="flex items-center justify-center gap-8 text-sm text-gray-400">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-sm text-gray-400">
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
+                <CheckCircle className="w-4 h-4 text-green-400" />
                 14-day free trial
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
+                <CheckCircle className="w-4 h-4 text-green-400" />
                 No credit card required
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
+                <CheckCircle className="w-4 h-4 text-green-400" />
                 Cancel anytime
               </div>
             </div>
@@ -520,7 +544,7 @@ function App() {
       <section id="features" className="py-20 bg-gray-900/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
               Powerful Features for
               <span className="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent"> Modern Advertising</span>
             </h2>
@@ -569,7 +593,7 @@ function App() {
       <section className="py-20 bg-gray-900/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
               What Our Customers Say
             </h2>
             <p className="text-xl text-gray-300">
@@ -597,7 +621,7 @@ function App() {
       <section id="pricing" className="py-20 bg-gradient-to-r from-purple-500/10 to-blue-600/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
               Simple, Transparent Pricing
             </h2>
             <p className="text-xl text-gray-300">
@@ -624,7 +648,7 @@ function App() {
       {/* CTA Section */}
       <section className="py-20 bg-black">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6">
             Ready to Launch Your
             <span className="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent"> Success?</span>
           </h2>
@@ -632,11 +656,15 @@ function App() {
             Join thousands of businesses already using AdStronaut to grow their revenue
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-blue-500 hover:bg-blue-600">
+            <Button 
+              size="lg" 
+              className="bg-blue-500 hover:bg-blue-600"
+              onClick={() => setCurrentView('dashboard')}
+            >
               Start Free Trial
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
-            <Button size="lg" variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800">
+            <Button size="lg" variant="outline">
               Schedule Demo
             </Button>
           </div>
@@ -652,7 +680,7 @@ function App() {
                 <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                   <Rocket className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-xl font-bold text-white">AdStronaut</span>
+                <span className="text-xl font-bold">AdStronaut</span>
               </div>
               <p className="text-gray-400">
                 AI-powered advertising platform for modern businesses.
@@ -660,32 +688,32 @@ function App() {
             </div>
             
             <div>
-              <h3 className="font-semibold mb-4 text-white">Product</h3>
+              <h3 className="font-semibold mb-4">Product</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">API</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Integrations</a></li>
+                <li><a href="#" className="hover:text-white">Features</a></li>
+                <li><a href="#" className="hover:text-white">Pricing</a></li>
+                <li><a href="#" className="hover:text-white">API</a></li>
+                <li><a href="#" className="hover:text-white">Integrations</a></li>
               </ul>
             </div>
             
             <div>
-              <h3 className="font-semibold mb-4 text-white">Company</h3>
+              <h3 className="font-semibold mb-4">Company</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">About</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
+                <li><a href="#" className="hover:text-white">About</a></li>
+                <li><a href="#" className="hover:text-white">Blog</a></li>
+                <li><a href="#" className="hover:text-white">Careers</a></li>
+                <li><a href="#" className="hover:text-white">Contact</a></li>
               </ul>
             </div>
             
             <div>
-              <h3 className="font-semibold mb-4 text-white">Support</h3>
+              <h3 className="font-semibold mb-4">Support</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Documentation</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Status</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacy</a></li>
+                <li><a href="#" className="hover:text-white">Help Center</a></li>
+                <li><a href="#" className="hover:text-white">Documentation</a></li>
+                <li><a href="#" className="hover:text-white">Status</a></li>
+                <li><a href="#" className="hover:text-white">Privacy</a></li>
               </ul>
             </div>
           </div>
@@ -699,7 +727,7 @@ function App() {
   );
 
   const Dashboard = () => (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-black">
       <Navigation />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
@@ -798,8 +826,8 @@ function App() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        campaign.status === 'active' ? 'bg-green-900 text-green-300' :
-                        campaign.status === 'paused' ? 'bg-yellow-900 text-yellow-300' :
+                        campaign.status === 'active' ? 'bg-green-900 text-green-200' :
+                        campaign.status === 'paused' ? 'bg-yellow-900 text-yellow-200' :
                         'bg-gray-700 text-gray-300'
                       }`}>
                         {campaign.status}
@@ -838,7 +866,7 @@ function App() {
   );
 
   const AIToolsView = () => (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-black">
       <Navigation />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
@@ -860,7 +888,7 @@ function App() {
         </div>
 
         {/* AI Features Overview */}
-        <div className="mt-12 bg-gradient-to-r from-purple-900/20 to-blue-900/20 rounded-lg p-8 border border-gray-700">
+        <div className="mt-12 bg-gradient-to-r from-purple-900/20 to-blue-900/20 rounded-lg p-8">
           <h2 className="text-2xl font-bold text-white mb-6 text-center">
             Powered by Advanced AI Technology
           </h2>
@@ -900,7 +928,7 @@ function App() {
   );
 
   const CampaignsView = () => (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-black">
       <Navigation />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
@@ -944,8 +972,8 @@ function App() {
                 <option>Paused</option>
                 <option>Draft</option>
               </select>
-              <button className="px-4 py-2 border border-gray-600 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors">
-                <Filter className="w-5 h-5" />
+              <button className="px-4 py-2 border border-gray-600 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors">
+                <Filter className="w-5 h-5 text-gray-300" />
               </button>
             </div>
           </div>
@@ -959,8 +987,8 @@ function App() {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-white">{campaign.name}</h3>
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                    campaign.status === 'active' ? 'bg-green-900 text-green-300' :
-                    campaign.status === 'paused' ? 'bg-yellow-900 text-yellow-300' :
+                    campaign.status === 'active' ? 'bg-green-900 text-green-200' :
+                    campaign.status === 'paused' ? 'bg-yellow-900 text-yellow-200' :
                     'bg-gray-700 text-gray-300'
                   }`}>
                     {campaign.status}
@@ -1004,11 +1032,11 @@ function App() {
                   <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                     View Details
                   </button>
-                  <button className="px-4 py-2 border border-gray-600 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors">
-                    <Edit className="w-4 h-4" />
+                  <button className="px-4 py-2 border border-gray-600 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors">
+                    <Edit className="w-4 h-4 text-gray-300" />
                   </button>
-                  <button className="px-4 py-2 border border-gray-600 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors">
-                    <Trash2 className="w-4 h-4" />
+                  <button className="px-4 py-2 border border-gray-600 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors">
+                    <Trash2 className="w-4 h-4 text-gray-300" />
                   </button>
                 </div>
               </div>
@@ -1020,7 +1048,7 @@ function App() {
   );
 
   const CreateCampaign = () => (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-black">
       <Navigation />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
@@ -1126,8 +1154,8 @@ function App() {
                     <Zap className="w-4 h-4 text-blue-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-blue-300">AI Suggestions</h3>
-                    <ul className="text-blue-200 text-sm mt-2 space-y-1">
+                    <h3 className="font-semibold text-blue-200">AI Suggestions</h3>
+                    <ul className="text-blue-300 text-sm mt-2 space-y-1">
                       <li>• Consider targeting ages 25-45 for better conversion rates</li>
                       <li>• Recommended budget: $50-75/day for optimal reach</li>
                       <li>• Best performing time: Weekdays 9AM-5PM</li>
@@ -1140,7 +1168,7 @@ function App() {
                 <button
                   type="button"
                   onClick={() => setCurrentView('campaigns')}
-                  className="flex-1 border border-gray-600 text-gray-300 px-6 py-3 rounded-lg font-medium hover:bg-gray-700 transition-colors"
+                  className="flex-1 border border-gray-600 text-gray-300 px-6 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors"
                 >
                   Cancel
                 </button>
@@ -1159,7 +1187,7 @@ function App() {
   );
 
   const Analytics = () => (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-black">
       <Navigation />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
