@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import AIService from '../services/aiService';
 
 // This would typically come from environment variables or user settings
-const GEMINI_API_KEY = 'YOUR_GEMINI_API_KEY_HERE'; // Replace with actual API key
+const GEMINI_API_KEY = 'AIzaSyABUKhkf1CWHNxvhjjOrTMaaoDzQwowz54';
 
 const useAI = () => {
   const [isLoading, setIsLoading] = useState(false);
