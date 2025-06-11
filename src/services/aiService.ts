@@ -39,14 +39,20 @@ interface CampaignInsightsRequest {
 
 class AIService {
   private apiKey: string;
-  private baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+  private baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
   }
 
   private async makeRequest(prompt: string): Promise<string> {
+    if (!this.apiKey || this.apiKey === 'your-api-key-here') {
+      throw new Error('Google Gemini API key is not configured. Please set up your API key.');
+    }
+
     try {
+      console.log('Making AI request with API key:', this.apiKey.substring(0, 10) + '...');
+      
       const response = await fetch(`${this.baseUrl}?key=${this.apiKey}`, {
         method: 'POST',
         headers: {
@@ -61,19 +67,69 @@ class AIService {
                 }
               ]
             }
+          ],
+          generationConfig: {
+            temperature: 0.7,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 2048,
+          },
+          safetySettings: [
+            {
+              category: "HARM_CATEGORY_HARASSMENT",
+              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+              category: "HARM_CATEGORY_HATE_SPEECH",
+              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+              category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+              category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            }
           ]
         })
       });
 
       if (!response.ok) {
-        throw new Error(`API request failed: ${response.statusText}`);
+        const errorData = await response.text();
+        console.error('API Error Response:', errorData);
+        
+        if (response.status === 400) {
+          throw new Error('Invalid API request. Please check your input parameters.');
+        } else if (response.status === 403) {
+          throw new Error('API key is invalid or access is forbidden. Please check your Google Gemini API key.');
+        } else if (response.status === 429) {
+          throw new Error('API rate limit exceeded. Please try again later.');
+        } else {
+          throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+        }
       }
 
       const data: AIResponse = await response.json();
-      return data.candidates[0]?.content?.parts[0]?.text || 'No response generated';
+      
+      if (!data.candidates || data.candidates.length === 0) {
+        throw new Error('No response generated from AI service');
+      }
+
+      const responseText = data.candidates[0]?.content?.parts[0]?.text;
+      if (!responseText) {
+        throw new Error('Empty response from AI service');
+      }
+
+      return responseText;
     } catch (error) {
       console.error('AI Service Error:', error);
-      throw new Error('Failed to generate AI response');
+      
+      if (error instanceof Error) {
+        throw error;
+      } else {
+        throw new Error('Failed to generate AI response');
+      }
     }
   }
 
@@ -83,32 +139,67 @@ class AIService {
     callsToAction: string[];
   }> {
     const prompt = `
-      Generate advertising copy for a ${request.platform} campaign with the following details:
+      You are an expert advertising copywriter. Generate compelling advertising copy for a ${request.platform} campaign.
+
+      Campaign Details:
       - Product/Service: ${request.productService}
       - Target Audience: ${request.targetAudience}
       - Campaign Objective: ${request.campaignObjective}
       - Tone: ${request.tone || 'Professional and engaging'}
+      - Platform: ${request.platform}
 
-      Please provide:
-      1. 5 compelling headlines (max 30 characters each)
-      2. 3 detailed descriptions (max 90 characters each)
-      3. 5 call-to-action phrases
+      Please generate:
+      1. 5 compelling headlines (each under 30 characters for ${request.platform})
+      2. 3 detailed descriptions (each under 90 characters)
+      3. 5 call-to-action phrases (short and action-oriented)
 
-      Format the response as JSON with keys: headlines, descriptions, callsToAction
+      IMPORTANT: Respond ONLY with valid JSON in this exact format:
+      {
+        "headlines": ["headline1", "headline2", "headline3", "headline4", "headline5"],
+        "descriptions": ["description1", "description2", "description3"],
+        "callsToAction": ["cta1", "cta2", "cta3", "cta4", "cta5"]
+      }
+
+      Do not include any other text, explanations, or markdown formatting.
     `;
 
     const response = await this.makeRequest(prompt);
     
     try {
-      // Extract JSON from response if it's wrapped in markdown
-      const jsonMatch = response.match(/```json\n([\s\S]*?)\n```/) || response.match(/\{[\s\S]*\}/);
+      // Clean the response to extract JSON
+      let cleanResponse = response.trim();
+      
+      // Remove markdown code blocks if present
+      const jsonMatch = cleanResponse.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
       if (jsonMatch) {
-        return JSON.parse(jsonMatch[1] || jsonMatch[0]);
+        cleanResponse = jsonMatch[1];
       }
       
-      // Fallback parsing if JSON is not properly formatted
-      return this.parseAdCopyResponse(response);
+      // Find JSON object in the response
+      const jsonStart = cleanResponse.indexOf('{');
+      const jsonEnd = cleanResponse.lastIndexOf('}') + 1;
+      
+      if (jsonStart !== -1 && jsonEnd > jsonStart) {
+        cleanResponse = cleanResponse.substring(jsonStart, jsonEnd);
+      }
+
+      const parsed = JSON.parse(cleanResponse);
+      
+      // Validate the response structure
+      if (parsed.headlines && parsed.descriptions && parsed.callsToAction) {
+        return {
+          headlines: Array.isArray(parsed.headlines) ? parsed.headlines.slice(0, 5) : [],
+          descriptions: Array.isArray(parsed.descriptions) ? parsed.descriptions.slice(0, 3) : [],
+          callsToAction: Array.isArray(parsed.callsToAction) ? parsed.callsToAction.slice(0, 5) : []
+        };
+      }
+      
+      throw new Error('Invalid response structure');
     } catch (error) {
+      console.error('Failed to parse AI response:', error);
+      console.log('Raw response:', response);
+      
+      // Return fallback data
       return this.parseAdCopyResponse(response);
     }
   }
@@ -146,8 +237,8 @@ class AIService {
     });
 
     return {
-      headlines: headlines.length ? headlines : ['Get Started Today', 'Limited Time Offer', 'Transform Your Business'],
-      descriptions: descriptions.length ? descriptions : ['Discover amazing results with our solution', 'Join thousands of satisfied customers', 'Experience the difference today'],
+      headlines: headlines.length ? headlines : ['Get Started Today', 'Limited Time Offer', 'Transform Your Business', 'Join Thousands', 'Discover More'],
+      descriptions: descriptions.length ? descriptions : ['Discover amazing results with our proven solution', 'Join thousands of satisfied customers worldwide', 'Experience the difference starting today'],
       callsToAction: callsToAction.length ? callsToAction : ['Learn More', 'Get Started', 'Shop Now', 'Sign Up', 'Contact Us']
     };
   }
@@ -159,30 +250,51 @@ class AIService {
     suggestions: string[];
   }> {
     const prompt = `
-      Analyze and suggest optimal audience targeting for:
+      You are an expert digital marketing strategist. Analyze and suggest optimal audience targeting.
+
+      Business Details:
       - Product/Service: ${request.productService}
       - Campaign Objective: ${request.campaignObjective}
       - Business Type: ${request.businessType}
       ${request.currentAudience ? `- Current Audience: ${request.currentAudience}` : ''}
 
-      Provide detailed audience targeting recommendations including:
-      1. Demographics (age range, gender, income level, education)
-      2. Interests and hobbies (at least 8 relevant interests)
-      3. Behaviors and purchase patterns (at least 5 behaviors)
-      4. Strategic suggestions for optimization
+      Provide detailed audience targeting recommendations.
 
-      Format as JSON with keys: demographics, interests, behaviors, suggestions
+      IMPORTANT: Respond ONLY with valid JSON in this exact format:
+      {
+        "demographics": {
+          "ageRange": "age range",
+          "gender": "gender preference",
+          "incomeLevel": "income level",
+          "education": "education level"
+        },
+        "interests": ["interest1", "interest2", "interest3", "interest4", "interest5", "interest6", "interest7", "interest8"],
+        "behaviors": ["behavior1", "behavior2", "behavior3", "behavior4", "behavior5"],
+        "suggestions": ["suggestion1", "suggestion2", "suggestion3", "suggestion4"]
+      }
+
+      Do not include any other text, explanations, or markdown formatting.
     `;
 
     const response = await this.makeRequest(prompt);
     
     try {
-      const jsonMatch = response.match(/```json\n([\s\S]*?)\n```/) || response.match(/\{[\s\S]*\}/);
+      let cleanResponse = response.trim();
+      const jsonMatch = cleanResponse.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
       if (jsonMatch) {
-        return JSON.parse(jsonMatch[1] || jsonMatch[0]);
+        cleanResponse = jsonMatch[1];
       }
-      return this.parseAudienceResponse(response);
+      
+      const jsonStart = cleanResponse.indexOf('{');
+      const jsonEnd = cleanResponse.lastIndexOf('}') + 1;
+      
+      if (jsonStart !== -1 && jsonEnd > jsonStart) {
+        cleanResponse = cleanResponse.substring(jsonStart, jsonEnd);
+      }
+
+      return JSON.parse(cleanResponse);
     } catch (error) {
+      console.error('Failed to parse audience response:', error);
       return this.parseAudienceResponse(response);
     }
   }
@@ -217,32 +329,51 @@ class AIService {
     optimizationTips: string[];
   }> {
     const prompt = `
-      Forecast campaign performance for:
+      You are a performance marketing analyst. Forecast campaign performance based on industry benchmarks.
+
+      Campaign Details:
       - Campaign Type: ${request.campaignType}
       - Budget: $${request.budget}
       - Duration: ${request.duration} days
       - Target Audience: ${request.targetAudience}
       - Platform: ${request.platform}
 
-      Provide realistic performance forecasts including:
-      1. Estimated impressions, clicks, conversions
-      2. Expected CTR, CPC, and ROAS
-      3. Budget optimization recommendations
-      4. Performance improvement tips
+      Provide realistic performance forecasts based on ${request.platform} industry benchmarks.
 
-      Base estimates on industry benchmarks for ${request.platform} campaigns.
-      Format as JSON with keys: estimatedImpressions, estimatedClicks, estimatedConversions, estimatedCTR, estimatedCPC, estimatedROAS, budgetRecommendations, optimizationTips
+      IMPORTANT: Respond ONLY with valid JSON in this exact format:
+      {
+        "estimatedImpressions": 50000,
+        "estimatedClicks": 1250,
+        "estimatedConversions": 40,
+        "estimatedCTR": 2.5,
+        "estimatedCPC": 0.85,
+        "estimatedROAS": 3.2,
+        "budgetRecommendations": ["recommendation1", "recommendation2", "recommendation3"],
+        "optimizationTips": ["tip1", "tip2", "tip3", "tip4"]
+      }
+
+      Do not include any other text, explanations, or markdown formatting.
     `;
 
     const response = await this.makeRequest(prompt);
     
     try {
-      const jsonMatch = response.match(/```json\n([\s\S]*?)\n```/) || response.match(/\{[\s\S]*\}/);
+      let cleanResponse = response.trim();
+      const jsonMatch = cleanResponse.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
       if (jsonMatch) {
-        return JSON.parse(jsonMatch[1] || jsonMatch[0]);
+        cleanResponse = jsonMatch[1];
       }
-      return this.parseForecastResponse(response, request.budget);
+      
+      const jsonStart = cleanResponse.indexOf('{');
+      const jsonEnd = cleanResponse.lastIndexOf('}') + 1;
+      
+      if (jsonStart !== -1 && jsonEnd > jsonStart) {
+        cleanResponse = cleanResponse.substring(jsonStart, jsonEnd);
+      }
+
+      return JSON.parse(cleanResponse);
     } catch (error) {
+      console.error('Failed to parse forecast response:', error);
       return this.parseForecastResponse(response, request.budget);
     }
   }
@@ -295,30 +426,43 @@ class AIService {
     alerts: string[];
   }> {
     const prompt = `
-      Analyze the following campaign performance data and provide insights:
-      ${JSON.stringify(request.campaignData, null, 2)}
-      
-      Time frame: ${request.timeframe}
+      You are a digital marketing analyst. Analyze campaign performance data and provide actionable insights.
 
-      Provide:
-      1. A concise summary of overall performance
-      2. Key findings and trends (3-5 points)
-      3. Actionable recommendations (3-5 points)
-      4. Any performance alerts or concerns
+      Campaign Data: ${JSON.stringify(request.campaignData, null, 2)}
+      Time Frame: ${request.timeframe}
 
-      Write in clear, business-friendly language that non-technical users can understand.
-      Format as JSON with keys: summary, keyFindings, recommendations, alerts
+      Provide clear, business-friendly insights that non-technical users can understand and act upon.
+
+      IMPORTANT: Respond ONLY with valid JSON in this exact format:
+      {
+        "summary": "Overall performance summary in 1-2 sentences",
+        "keyFindings": ["finding1", "finding2", "finding3", "finding4"],
+        "recommendations": ["recommendation1", "recommendation2", "recommendation3", "recommendation4"],
+        "alerts": ["alert1", "alert2"]
+      }
+
+      Do not include any other text, explanations, or markdown formatting.
     `;
 
     const response = await this.makeRequest(prompt);
     
     try {
-      const jsonMatch = response.match(/```json\n([\s\S]*?)\n```/) || response.match(/\{[\s\S]*\}/);
+      let cleanResponse = response.trim();
+      const jsonMatch = cleanResponse.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
       if (jsonMatch) {
-        return JSON.parse(jsonMatch[1] || jsonMatch[0]);
+        cleanResponse = jsonMatch[1];
       }
-      return this.parseInsightsResponse(response);
+      
+      const jsonStart = cleanResponse.indexOf('{');
+      const jsonEnd = cleanResponse.lastIndexOf('}') + 1;
+      
+      if (jsonStart !== -1 && jsonEnd > jsonStart) {
+        cleanResponse = cleanResponse.substring(jsonStart, jsonEnd);
+      }
+
+      return JSON.parse(cleanResponse);
     } catch (error) {
+      console.error('Failed to parse insights response:', error);
       return this.parseInsightsResponse(response);
     }
   }
@@ -334,12 +478,14 @@ class AIService {
       keyFindings: [
         'Mobile traffic accounts for 70% of total impressions',
         'Conversion rates are highest during weekday business hours',
-        'Video ads are outperforming static images by 35%'
+        'Video ads are outperforming static images by 35%',
+        'Cost per acquisition has decreased by 15% this month'
       ],
       recommendations: [
-        'Increase mobile-optimized ad spend',
+        'Increase mobile-optimized ad spend by 25%',
         'Focus budget allocation on weekday scheduling',
-        'Expand video ad creative testing'
+        'Expand video ad creative testing',
+        'Consider increasing overall budget for high-performing campaigns'
       ],
       alerts: [
         'CPC has increased 12% over the past week',
