@@ -27,17 +27,27 @@ import {
   Brain
 } from 'lucide-react';
 
-// Import AI components
+// Import components
 import AIAdCopyGenerator from './components/AIAdCopyGenerator';
 import AIAudienceTargeting from './components/AIAudienceTargeting';
 import AIPerformanceForecast from './components/AIPerformanceForecast';
 import AICampaignInsights from './components/AICampaignInsights';
+import MetricsCard from './components/Dashboard/MetricsCard';
+import CampaignHealthIndicator from './components/Dashboard/CampaignHealthIndicator';
+import PerformanceChart from './components/Dashboard/PerformanceChart';
+import BulkActions from './components/Campaigns/BulkActions';
+import CampaignFilters from './components/Campaigns/CampaignFilters';
+import StepIndicator from './components/CampaignWizard/StepIndicator';
+import CampaignPreview from './components/CampaignWizard/CampaignPreview';
+import ExportModal from './components/Analytics/ExportModal';
+import CrossPlatformComparison from './components/Analytics/CrossPlatformComparison';
 
 interface Campaign {
   id: string;
   name: string;
   platform: string;
-  status: 'active' | 'paused' | 'draft';
+  status: 'active' | 'paused' | 'draft' | 'completed';
+  health: 'excellent' | 'good' | 'warning' | 'critical';
   budget: number;
   spent: number;
   impressions: number;
@@ -65,12 +75,21 @@ interface PricingTier {
 function App() {
   const [currentView, setCurrentView] = useState<'landing' | 'dashboard' | 'campaigns' | 'create-campaign' | 'analytics' | 'ai-tools'>('landing');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [selectedCampaigns, setSelectedCampaigns] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedPlatform, setSelectedPlatform] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('');
+  const [dateRange, setDateRange] = useState('last30days');
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [currentWizardStep, setCurrentWizardStep] = useState(1);
+  
   const [campaigns] = useState<Campaign[]>([
     {
       id: '1',
       name: 'Summer Sale 2024',
       platform: 'Google Ads',
       status: 'active',
+      health: 'excellent',
       budget: 5000,
       spent: 3250,
       impressions: 125000,
@@ -85,6 +104,7 @@ function App() {
       name: 'Brand Awareness Campaign',
       platform: 'Facebook',
       status: 'active',
+      health: 'good',
       budget: 2500,
       spent: 1890,
       impressions: 89000,
@@ -99,6 +119,7 @@ function App() {
       name: 'Product Launch',
       platform: 'Instagram',
       status: 'paused',
+      health: 'warning',
       budget: 3000,
       spent: 850,
       impressions: 45000,
@@ -107,6 +128,21 @@ function App() {
       ctr: 3.0,
       cpc: 0.63,
       roas: 2.8
+    },
+    {
+      id: '4',
+      name: 'LinkedIn B2B Campaign',
+      platform: 'LinkedIn',
+      status: 'active',
+      health: 'good',
+      budget: 4000,
+      spent: 2100,
+      impressions: 32000,
+      clicks: 960,
+      conversions: 48,
+      ctr: 3.0,
+      cpc: 2.19,
+      roas: 3.5
     }
   ]);
 
@@ -186,6 +222,41 @@ function App() {
       ]
     }
   ];
+
+  // Filter campaigns based on search and filters
+  const filteredCampaigns = campaigns.filter(campaign => {
+    const matchesSearch = campaign.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesPlatform = !selectedPlatform || campaign.platform === selectedPlatform;
+    const matchesStatus = !selectedStatus || campaign.status === selectedStatus;
+    return matchesSearch && matchesPlatform && matchesStatus;
+  });
+
+  // Calculate metrics
+  const totalSpend = campaigns.reduce((sum, campaign) => sum + campaign.spent, 0);
+  const totalImpressions = campaigns.reduce((sum, campaign) => sum + campaign.impressions, 0);
+  const totalClicks = campaigns.reduce((sum, campaign) => sum + campaign.clicks, 0);
+  const totalConversions = campaigns.reduce((sum, campaign) => sum + campaign.conversions, 0);
+  const averageROAS = campaigns.reduce((sum, campaign) => sum + campaign.roas, 0) / campaigns.length;
+
+  // Cross-platform data for analytics
+  const crossPlatformData = [
+    { platform: 'Google Ads', spend: 3250, impressions: 125000, clicks: 3750, conversions: 187, roas: 4.2, ctr: 3.0, cpc: 0.87 },
+    { platform: 'Facebook', spend: 1890, impressions: 89000, clicks: 2134, conversions: 89, roas: 3.1, ctr: 2.4, cpc: 0.89 },
+    { platform: 'Instagram', spend: 850, impressions: 45000, clicks: 1350, conversions: 45, roas: 2.8, ctr: 3.0, cpc: 0.63 },
+    { platform: 'LinkedIn', spend: 2100, impressions: 32000, clicks: 960, conversions: 48, roas: 3.5, ctr: 3.0, cpc: 2.19 }
+  ];
+
+  const handleBulkAction = (action: string, campaignIds: string[]) => {
+    console.log(`Performing ${action} on campaigns:`, campaignIds);
+    // Implement bulk actions logic here
+  };
+
+  const handleExport = (options: any) => {
+    console.log('Exporting with options:', options);
+    // Implement export logic here
+  };
+
+  const wizardSteps = ['Basic Info', 'Budget & Timeline', 'Audience', 'Creative', 'Review'];
 
   const Navigation = () => (
     <nav className="bg-white shadow-sm border-b border-gray-200">
@@ -506,56 +577,49 @@ function App() {
 
         {/* Key Metrics */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Spend</p>
-                <p className="text-3xl font-bold text-gray-900">$5,990</p>
-                <p className="text-sm text-green-600 mt-1">+12% vs last month</p>
-              </div>
-              <div className="bg-blue-100 p-3 rounded-full">
-                <DollarSign className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
+          <MetricsCard
+            title="Total Spend"
+            value={`$${totalSpend.toLocaleString()}`}
+            change="+12% vs last month"
+            changeType="positive"
+            icon={DollarSign}
+            iconColor="bg-blue-100"
+          />
+          <MetricsCard
+            title="Impressions"
+            value={`${Math.round(totalImpressions / 1000)}K`}
+            change="+8% vs last month"
+            changeType="positive"
+            icon={Eye}
+            iconColor="bg-purple-100"
+          />
+          <MetricsCard
+            title="Clicks"
+            value={totalClicks.toLocaleString()}
+            change="+15% vs last month"
+            changeType="positive"
+            icon={Target}
+            iconColor="bg-green-100"
+          />
+          <MetricsCard
+            title="ROAS"
+            value={`${averageROAS.toFixed(1)}x`}
+            change="+5% vs last month"
+            changeType="positive"
+            icon={TrendingUp}
+            iconColor="bg-yellow-100"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+          {/* Performance Chart */}
+          <div className="lg:col-span-2">
+            <PerformanceChart title="Campaign Performance Overview" />
           </div>
           
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Impressions</p>
-                <p className="text-3xl font-bold text-gray-900">259K</p>
-                <p className="text-sm text-green-600 mt-1">+8% vs last month</p>
-              </div>
-              <div className="bg-purple-100 p-3 rounded-full">
-                <Eye className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Clicks</p>
-                <p className="text-3xl font-bold text-gray-900">7,234</p>
-                <p className="text-sm text-green-600 mt-1">+15% vs last month</p>
-              </div>
-              <div className="bg-green-100 p-3 rounded-full">
-                <Target className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">ROAS</p>
-                <p className="text-3xl font-bold text-gray-900">3.8x</p>
-                <p className="text-sm text-green-600 mt-1">+5% vs last month</p>
-              </div>
-              <div className="bg-yellow-100 p-3 rounded-full">
-                <TrendingUp className="w-6 h-6 text-yellow-600" />
-              </div>
-            </div>
+          {/* Campaign Health */}
+          <div>
+            <CampaignHealthIndicator campaigns={campaigns} />
           </div>
         </div>
 
@@ -714,47 +778,47 @@ function App() {
           </button>
         </div>
 
+        {/* Bulk Actions */}
+        <BulkActions
+          selectedCampaigns={selectedCampaigns}
+          onBulkAction={handleBulkAction}
+          onClearSelection={() => setSelectedCampaigns([])}
+        />
+
         {/* Filters */}
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search campaigns..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <select className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                <option>All Platforms</option>
-                <option>Google Ads</option>
-                <option>Facebook</option>
-                <option>Instagram</option>
-                <option>LinkedIn</option>
-              </select>
-              <select className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                <option>All Status</option>
-                <option>Active</option>
-                <option>Paused</option>
-                <option>Draft</option>
-              </select>
-              <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                <Filter className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
+        <CampaignFilters
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          selectedPlatform={selectedPlatform}
+          onPlatformChange={setSelectedPlatform}
+          selectedStatus={selectedStatus}
+          onStatusChange={setSelectedStatus}
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
+          onExport={() => setShowExportModal(true)}
+        />
 
         {/* Campaigns Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {campaigns.map((campaign) => (
+          {filteredCampaigns.map((campaign) => (
             <div key={campaign.id} className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">{campaign.name}</h3>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedCampaigns.includes(campaign.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedCampaigns([...selectedCampaigns, campaign.id]);
+                        } else {
+                          setSelectedCampaigns(selectedCampaigns.filter(id => id !== campaign.id));
+                        }
+                      }}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3"
+                    />
+                    <h3 className="text-lg font-semibold text-gray-900">{campaign.name}</h3>
+                  </div>
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                     campaign.status === 'active' ? 'bg-green-100 text-green-800' :
                     campaign.status === 'paused' ? 'bg-yellow-100 text-yellow-800' :
@@ -812,148 +876,210 @@ function App() {
             </div>
           ))}
         </div>
+
+        {/* Export Modal */}
+        <ExportModal
+          isOpen={showExportModal}
+          onClose={() => setShowExportModal(false)}
+          onExport={handleExport}
+        />
       </div>
     </div>
   );
 
-  const CreateCampaign = () => (
-    <div className="min-h-screen bg-gray-50">
-      <Navigation />
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Create New Campaign</h1>
-          <p className="text-gray-600 mt-2">Set up your advertising campaign with AI-powered recommendations</p>
-        </div>
+  const CreateCampaign = () => {
+    const [campaignData, setCampaignData] = useState({
+      name: '',
+      platform: '',
+      objective: '',
+      budget: 0,
+      duration: 0,
+      targetAudience: '',
+      adCreative: []
+    });
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="p-6">
-            <form className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Campaign Name</label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter campaign name..."
+    const validationErrors: string[] = [];
+    if (!campaignData.name) validationErrors.push('Campaign name is required');
+    if (!campaignData.platform) validationErrors.push('Platform selection is required');
+    if (!campaignData.objective) validationErrors.push('Campaign objective is required');
+    if (campaignData.budget <= 0) validationErrors.push('Budget must be greater than 0');
+
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">Create New Campaign</h1>
+            <p className="text-gray-600 mt-2">Set up your advertising campaign with AI-powered recommendations</p>
+          </div>
+
+          <StepIndicator
+            currentStep={currentWizardStep}
+            totalSteps={wizardSteps.length}
+            steps={wizardSteps}
+          />
+
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="p-6">
+              {currentWizardStep === 5 ? (
+                <CampaignPreview
+                  campaignData={campaignData}
+                  onEdit={setCurrentWizardStep}
+                  validationErrors={validationErrors}
                 />
-              </div>
+              ) : (
+                <form className="space-y-6">
+                  {currentWizardStep === 1 && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Campaign Name</label>
+                        <input
+                          type="text"
+                          value={campaignData.name}
+                          onChange={(e) => setCampaignData({ ...campaignData, name: e.target.value })}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Enter campaign name..."
+                        />
+                      </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Platform</label>
-                  <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <option>Select platform...</option>
-                    <option>Google Ads</option>
-                    <option>Facebook Ads</option>
-                    <option>Instagram Ads</option>
-                    <option>LinkedIn Ads</option>
-                    <option>Twitter Ads</option>
-                  </select>
-                </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Platform</label>
+                          <select 
+                            value={campaignData.platform}
+                            onChange={(e) => setCampaignData({ ...campaignData, platform: e.target.value })}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          >
+                            <option value="">Select platform...</option>
+                            <option value="Google Ads">Google Ads</option>
+                            <option value="Facebook Ads">Facebook Ads</option>
+                            <option value="Instagram Ads">Instagram Ads</option>
+                            <option value="LinkedIn Ads">LinkedIn Ads</option>
+                            <option value="Twitter Ads">Twitter Ads</option>
+                          </select>
+                        </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Campaign Objective</label>
-                  <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <option>Select objective...</option>
-                    <option>Brand Awareness</option>
-                    <option>Website Traffic</option>
-                    <option>Lead Generation</option>
-                    <option>Sales Conversion</option>
-                    <option>App Downloads</option>
-                  </select>
-                </div>
-              </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Campaign Objective</label>
+                          <select 
+                            value={campaignData.objective}
+                            onChange={(e) => setCampaignData({ ...campaignData, objective: e.target.value })}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          >
+                            <option value="">Select objective...</option>
+                            <option value="Brand Awareness">Brand Awareness</option>
+                            <option value="Website Traffic">Website Traffic</option>
+                            <option value="Lead Generation">Lead Generation</option>
+                            <option value="Sales Conversion">Sales Conversion</option>
+                            <option value="App Downloads">App Downloads</option>
+                          </select>
+                        </div>
+                      </div>
+                    </>
+                  )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Daily Budget</label>
-                  <div className="relative">
-                    <DollarSign className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="number"
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="0.00"
-                    />
-                  </div>
-                </div>
+                  {currentWizardStep === 2 && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Daily Budget</label>
+                        <div className="relative">
+                          <DollarSign className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                          <input
+                            type="number"
+                            value={campaignData.budget}
+                            onChange={(e) => setCampaignData({ ...campaignData, budget: parseInt(e.target.value) || 0 })}
+                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="0.00"
+                          />
+                        </div>
+                      </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Campaign Duration</label>
-                  <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <option>Select duration...</option>
-                    <option>1 Week</option>
-                    <option>2 Weeks</option>
-                    <option>1 Month</option>
-                    <option>3 Months</option>
-                    <option>6 Months</option>
-                    <option>Continuous</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Target Audience</label>
-                <textarea
-                  rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Describe your target audience (age, interests, location, etc.)..."
-                ></textarea>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Ad Creative</label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <div className="space-y-2">
-                    <div className="text-gray-400">
-                      <svg className="mx-auto h-12 w-12" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Campaign Duration (days)</label>
+                        <input
+                          type="number"
+                          value={campaignData.duration}
+                          onChange={(e) => setCampaignData({ ...campaignData, duration: parseInt(e.target.value) || 0 })}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="30"
+                        />
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-600">
-                      <span className="text-blue-600 hover:underline cursor-pointer">Upload images or videos</span> or drag and drop
+                  )}
+
+                  {currentWizardStep === 3 && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Target Audience</label>
+                      <textarea
+                        rows={4}
+                        value={campaignData.targetAudience}
+                        onChange={(e) => setCampaignData({ ...campaignData, targetAudience: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Describe your target audience (age, interests, location, etc.)..."
+                      />
                     </div>
-                    <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
-                  </div>
-                </div>
-              </div>
+                  )}
 
-              {/* AI Suggestions */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-start">
-                  <div className="bg-blue-100 p-2 rounded-full mr-3">
-                    <Zap className="w-4 h-4 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-blue-900">AI Suggestions</h3>
-                    <ul className="text-blue-700 text-sm mt-2 space-y-1">
-                      <li>• Consider targeting ages 25-45 for better conversion rates</li>
-                      <li>• Recommended budget: $50-75/day for optimal reach</li>
-                      <li>• Best performing time: Weekdays 9AM-5PM</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
+                  {currentWizardStep === 4 && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Ad Creative</label>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                        <div className="space-y-2">
+                          <div className="text-gray-400">
+                            <svg className="mx-auto h-12 w-12" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                              <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            <span className="text-blue-600 hover:underline cursor-pointer">Upload images or videos</span> or drag and drop
+                          </div>
+                          <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </form>
+              )}
 
-              <div className="flex space-x-4 pt-6">
+              <div className="flex space-x-4 pt-6 mt-6 border-t border-gray-200">
+                {currentWizardStep > 1 && (
+                  <button
+                    onClick={() => setCurrentWizardStep(currentWizardStep - 1)}
+                    className="flex-1 border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                  >
+                    Previous
+                  </button>
+                )}
+                
+                {currentWizardStep < wizardSteps.length ? (
+                  <button
+                    onClick={() => setCurrentWizardStep(currentWizardStep + 1)}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                  >
+                    Next
+                  </button>
+                ) : (
+                  <button
+                    disabled={validationErrors.length > 0}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                  >
+                    Launch Campaign
+                  </button>
+                )}
+                
                 <button
-                  type="button"
                   onClick={() => setCurrentView('campaigns')}
-                  className="flex-1 border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-                >
-                  Create Campaign
-                </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const Analytics = () => (
     <div className="min-h-screen bg-gray-50">
@@ -965,13 +1091,20 @@ function App() {
             <p className="text-gray-600 mt-2">Detailed insights into your campaign performance</p>
           </div>
           <div className="mt-4 sm:mt-0 flex space-x-2">
-            <select className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-              <option>Last 30 days</option>
-              <option>Last 7 days</option>
-              <option>Last 90 days</option>
-              <option>Custom range</option>
+            <select 
+              value={dateRange}
+              onChange={(e) => setDateRange(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="last30days">Last 30 days</option>
+              <option value="last7days">Last 7 days</option>
+              <option value="last90days">Last 90 days</option>
+              <option value="custom">Custom range</option>
             </select>
-            <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
+            <button 
+              onClick={() => setShowExportModal(true)}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+            >
               Export Report
             </button>
           </div>
@@ -979,16 +1112,7 @@ function App() {
 
         {/* Performance Overview */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Campaign Performance</h3>
-            <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-              <div className="text-center text-gray-500">
-                <BarChart3 className="w-12 h-12 mx-auto mb-2" />
-                <p>Performance Chart</p>
-              </div>
-            </div>
-          </div>
-
+          <PerformanceChart title="Campaign Performance Trends" timeframe={dateRange} />
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Traffic Sources</h3>
             <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
@@ -998,6 +1122,11 @@ function App() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Cross-Platform Comparison */}
+        <div className="mb-8">
+          <CrossPlatformComparison data={crossPlatformData} />
         </div>
 
         {/* Detailed Metrics */}
@@ -1056,6 +1185,13 @@ function App() {
             </table>
           </div>
         </div>
+
+        {/* Export Modal */}
+        <ExportModal
+          isOpen={showExportModal}
+          onClose={() => setShowExportModal(false)}
+          onExport={handleExport}
+        />
       </div>
     </div>
   );
